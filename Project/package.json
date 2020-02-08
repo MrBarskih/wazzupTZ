@@ -3,10 +3,10 @@
   "version": "0.0.1",
   "description": "Backend Wazzup",
   "scripts": {
-    "start": "NODE_ENV=production babel-node src/index.js",
-    "dev": "NODE_ENV=development IS_DEV=true nodemon --exec babel-node --inspect src/index.js",
-    "test": "NODE_ENV=test mocha --require babel-core/register --exit test",
-    "coverage": "NODE_ENV=test nyc --reporter=text --reporter=html --check-coverage --lines 80 mocha --require babel-core/register --exit test",
+    "start": "cross-env NODE_ENV=production babel-node src/index.js",
+    "dev": "cross-env NODE_ENV=development IS_DEV=true nodemon --exec babel-node --inspect src/index.js",
+    "test": "cross-env NODE_ENV=test mocha --require babel-core/register --exit test",
+    "coverage": "cross-env NODE_ENV=test nyc --reporter=text --reporter=html --check-coverage --lines 80 mocha --require babel-core/register --exit test",
     "lint": "eslint ./src",
     "doc": "apidoc -i src/ -o docs/"
   },
@@ -34,6 +34,7 @@
     "chai": "^4.1.2",
     "chai-arrays": "^2.0.0",
     "chai-http": "^4.0.0",
+    "cross-env": "^7.0.0",
     "eslint": "^5.13.0",
     "mocha": "^5.1.1",
     "nodemailer": "^4.6.4",
