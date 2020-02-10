@@ -10,8 +10,8 @@ const router = Router();
 router.get("/", (req, res) => {
   try{
 
-  }catch (error) {
-
+  }
+  catch (error) {
     res.status(400).json({ errors: { backend: ["Error has occured: ", error] } })
   }
 });
@@ -26,7 +26,8 @@ router.post("/", async (req, res) => {
 		description: req.body.description,
 		favorites: req.body.favorites
 	});
-  }catch (error) {
+  }
+  catch (error) {
   	res.status(400).json({ errors: { backend: ["Error has occured: ", error] } })
   }
 });

@@ -144,7 +144,7 @@ router.get("/", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    let data = jwt.decode(req.get('authorization'));
+   /* let data = jwt.decode(req.get('authorization'));
     if (!data) {
       res.status(401).json({
         errors: {
@@ -152,7 +152,7 @@ router.post("/", async (req, res) => {
         }
       });
       return;
-    }
+    }*/
 
     let channel = await models.channel.create({
       guid: uuidv4(),
