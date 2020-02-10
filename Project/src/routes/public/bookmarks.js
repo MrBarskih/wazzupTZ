@@ -18,8 +18,7 @@ router.get("/", (req, res) => {
 
 router.post("/", async (req, res) => {
   try{
- 	 let channel = await models.channel.create({
- 	 	accountId: 1,
+ 	 let bookmarks = await models.bookmarks.create({
       	guid: uuidv4(),
 		link: req.body.link,
 		createdAt: new Date(),
