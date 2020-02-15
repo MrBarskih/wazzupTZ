@@ -3,8 +3,10 @@ export const fieldsConstraints = {
     type: 'string',
     values: [
       'guid',
+      'link',
       'createdAt',
-      'description'
+      'updatedAt',
+      'description',
       'favorites'
     ]
   }
