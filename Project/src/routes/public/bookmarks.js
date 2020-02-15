@@ -6,7 +6,7 @@ import http from "../../../config/http";
 import uuidv4 from 'uuid/v4'
 
 import validate from 'validate.js';
-import { fieldsConstraints } from '../../validators/bookmarks';
+import { fieldsConstraints, sortByC } from '../../validators/bookmarks';
 import { limitConstraints, offsetConstraints } from '../../validators/basic';
 
 const router = Router();
@@ -14,10 +14,11 @@ const router = Router();
 //получение всех закладок
 router.get("/", async (req, res) => {
 	try{
-			const validationResult = validate(req.body, {
+			const validationResult = validate(req.query, {
 				fields: fieldsConstraints,
 				limit: limitConstraints,
-    			offset: offsetConstraints
+    			offset: offsetConstraints,
+    			sort_by: sortByC
 			});
 
 			if (validationResult) {
@@ -25,8 +26,14 @@ router.get("/", async (req, res) => {
 			} 
 			else {
 
-				let offset = req.body.offset || 0;
-    			let limit = req.body.limit || 50;
+				let offset 		= req.query.offset || 0;
+    			let limit 		= req.query.limit || 50;
+    			let filter 		= req.query.filter;
+    			let filterValue = req.query.filter_value;
+    			let filterFrom 	= req.query.filter_from;
+    			let filterTo 	= req.query.filter_to;
+    			let sortBy 		= req.query.sort_by || "createdAt";
+    			let sort_dir 	= req.query.sort_dir || "asc";
 
     			let results = await Promise.all([
 						await models.bookmarks.findAll({
@@ -46,7 +53,7 @@ router.get("/", async (req, res) => {
 				];
 
 				res.status(200).json({
-					ho: '' + req.query.x,
+					ho: '' + sortBy,
 					lenght: results[1],
 					data: results[0].map(bookmarks => {
 						return fields.reduce((object, current) => {

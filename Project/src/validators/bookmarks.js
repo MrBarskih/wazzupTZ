@@ -1,3 +1,4 @@
+
 export const fieldsConstraints = {
   array: {
     type: 'string',
@@ -9,5 +10,11 @@ export const fieldsConstraints = {
       'description',
       'favorites'
     ]
+  }
+}
+
+export const sortByC = {
+  presence: {
+    allowEmpty: false
   }
 }
