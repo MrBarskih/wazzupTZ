@@ -14,7 +14,5 @@ export const fieldsConstraints = {
 }
 
 export const sortByC = {
-  presence: {
-    allowEmpty: false
-  }
+
 }
