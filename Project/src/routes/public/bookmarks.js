@@ -36,12 +36,11 @@ router.get("/", async (req, res) => {
     			let sort_dir 	= req.query.sort_dir || "asc";
 
     			let results = await Promise.all([
-						await models.bookmarks.findAll({
+						await models.bookmarks.findAndCountAll({
 							offset,
 							limit
-						}),
-						await models.bookmarks.count()
-    				],);
+						})
+    				]);
 
     			let fields = req.body.fields || [
 					'guid',
@@ -54,8 +53,8 @@ router.get("/", async (req, res) => {
 
 				res.status(200).json({
 					ho: '' + sortBy,
-					lenght: results[1],
-					data: results[0].map(bookmarks => {
+					lenght: results[0].count,
+					data: results[0].rows.map(bookmarks => {
 						return fields.reduce((object, current) => {
 							if (bookmarks[current] !== null) {
 								object[current] = bookmarks[current];
