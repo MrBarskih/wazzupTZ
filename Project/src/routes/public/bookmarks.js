@@ -33,12 +33,15 @@ router.get("/", async (req, res) => {
     			let filterFrom 	= req.query.filter_from;
     			let filterTo 	= req.query.filter_to;
     			let sortBy 		= req.query.sort_by || "createdAt";
-    			let sort_dir 	= req.query.sort_dir || "asc";
+    			let sortDir 	= req.query.sort_dir || "asc";
 
     			let results = await Promise.all([
 						await models.bookmarks.findAndCountAll({
 							offset,
-							limit
+							limit,
+							order :[
+								[`${sortBy}`, `${sortDir}`]
+							]
 						})
     				]);
 
@@ -46,14 +49,12 @@ router.get("/", async (req, res) => {
 					'guid',
 					'link',
 					'createdAt',
-					'updatedAt',
 					'description',
 					'favorites'
 				];
 
 				res.status(200).json({
-					ho: '' + sortBy,
-					lenght: results[0].count,
+					lenght: results[0].count > limit ? limit-offset : results[0].count-offset,
 					data: results[0].rows.map(bookmarks => {
 						return fields.reduce((object, current) => {
 							if (bookmarks[current] !== null) {
