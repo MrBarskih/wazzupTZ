@@ -6,7 +6,7 @@ import http from "../../../config/http";
 import uuidv4 from 'uuid/v4'
 
 import validate from 'validate.js';
-import { fieldsConstraints, sortByC } from '../../validators/bookmarks';
+import { fieldsConstraints, sortByConstraints } from '../../validators/bookmarks';
 import { limitConstraints, offsetConstraints } from '../../validators/basic';
 
 const router = Router();
@@ -15,10 +15,9 @@ const router = Router();
 router.get("/", async (req, res) => {
 	try{
 			const validationResult = validate(req.query, {
-				fields: fieldsConstraints,
 				limit: limitConstraints,
     			offset: offsetConstraints,
-    			sort_by: sortByC
+    			sort_by: sortByConstraints,
 			});
 
 			if (validationResult) {

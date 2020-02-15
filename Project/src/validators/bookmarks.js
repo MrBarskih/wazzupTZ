@@ -13,6 +13,6 @@ export const fieldsConstraints = {
   }
 }
 
-export const sortByC = {
+export const sortByConstraints = {
 
 }
