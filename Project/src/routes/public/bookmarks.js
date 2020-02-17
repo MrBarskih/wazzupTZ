@@ -161,17 +161,44 @@ router.post("/", async (req, res) => {
 //изменение закладки
 router.patch("/:guid", async (req, res) =>{
 	try{
-		let updatedAt = new Date();
-		await models.bookmarks.update(
-			{
-				link: req.body.link,
-				description: req.body.description,
-				favorites: req.body.favorites,
-				updatedAt: updatedAt
-			},
-			{where: {guid: req.params.guid}}
-		);
-		res.status(200).json();
+		let results = await Promise.all([
+			await models.bookmarks.findAndCountAll({
+				where: {guid: req.params.guid}
+			})
+		]);
+
+			if(results[0].count){
+
+				const validationResult = validate(req.body, {
+					link: linkConstraints,
+					fields: fieldsConstraints,
+					});
+
+				const favoritesValidation = validate.contains(["false", "true", "0", "1"],req.body.favorites) + validate.isBoolean(req.body.favorites);
+
+				if (validationResult) {
+					res.status(400).json({ errors: validationResult })
+				} 
+				else if(!favoritesValidation){
+					res.status(400).json({ errors: "favorites is not boolean" })
+				}
+				else {
+					let updatedAt = new Date();
+					await models.bookmarks.update(
+						{
+							link: req.body.link,
+							description: req.body.description,
+							favorites: req.body.favorites,
+							updatedAt: updatedAt
+						},
+						{where: {guid: req.params.guid}}
+					);
+					res.status(200).json();
+				}
+			}else{
+				res.status(404).json();
+			}
+		
 	}catch(error){
 		res.status(400).json({ errors: { backend: ["Error has occured: ", error] } })
 	}
@@ -181,10 +208,21 @@ router.patch("/:guid", async (req, res) =>{
 router.delete("/:guid", async (req, res) => {
 
 	try{
-		await models.bookmarks.destroy({
-			where:{guid: req.params.guid}
-		});
-		res.status(200).json();
+		let results = await Promise.all([
+			await models.bookmarks.findAndCountAll({
+				where: {guid: req.params.guid}
+			})
+		]);
+
+		if(results[0].count){
+			await models.bookmarks.destroy({
+				where:{guid: req.params.guid}
+			});
+			res.status(200).json();
+		
+		}else{
+			res.status(404).json();
+		}
 	}
 	catch (error) {
 		res.status(400).json({ errors: { backend: ["Error has occured: ", error] } })
