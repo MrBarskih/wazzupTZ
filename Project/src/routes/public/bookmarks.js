@@ -122,25 +122,12 @@ router.post("/", async (req, res) => {
 	try{
 
 		const validationResult = validate(req.body, {
-
 			link: linkConstraints,
-			fields: fieldsConstraints
-
-		});
+			fields: fieldsConstraints,
+			});
 
 		if (validationResult) {
-			if(validationResult.link){
-				res.status(400).json({ 
-					errors: [{
-						code: 'BOOKMARKS_INVALID_LINK',
-						description: 'Invalid link'
-					}]
-
-				})
-			}else{
-				res.status(400).json({ errors: validationResult })
-			}
-
+			res.status(400).json({ errors: validationResult })
 		} 
 		else {
 
