@@ -2,11 +2,10 @@
 import { Router } from 'express';
 
 import models from '../../models';
-import http from "../../../config/http";
 import uuidv4 from 'uuid/v4'
 
 import validate from 'validate.js';
-import { sortByConstraints, sortDirConstraints, linkConstraints, fieldsConstraints } from '../../validators/bookmarks';
+import { sortByConstraints, sortDirConstraints, linkConstraints, fieldsConstraints, favoritesConstraints } from '../../validators/bookmarks';
 import { limitConstraints, offsetConstraints } from '../../validators/basic';
 
 const router = Router();
@@ -72,10 +71,10 @@ router.get("/", async (req, res) => {
 
 			let offset 		= req.query.offset || 0;
 			let limit 		= req.query.limit || 50;
-			let filter 		= req.query.filter;
+			/*let filter 		= req.query.filter;
 			let filterValue = req.query.filter_value;
 			let filterFrom 	= req.query.filter_from;
-			let filterTo 	= req.query.filter_to;
+			let filterTo 	= req.query.filter_to;*/
 			let sortBy 		= req.query.sort_by || "createdAt";
 			let sortDir 	= req.query.sort_dir || "asc";
 
@@ -111,9 +110,9 @@ router.get("/", async (req, res) => {
 			});
 		}
 	}
-  	catch (error) {
-   		res.status(400).json({ errors: { backend: ["Error has occured: ", error] } })
- 	 }
+	catch(error){
+		res.status(400).json({errors:{backend:["Error has occured: ", error]}})
+	}
 });
 
 //добавление в закладок в бд
@@ -124,6 +123,7 @@ router.post("/", async (req, res) => {
 		const validationResult = validate(req.body, {
 			link: linkConstraints,
 			fields: fieldsConstraints,
+			favorites: favoritesConstraints
 			});
 
 		if (validationResult) {
@@ -133,7 +133,7 @@ router.post("/", async (req, res) => {
 
 			let createdAt = new Date();
 			let guid = uuidv4();
-			let bookmarks = await models.bookmarks.create({
+			await models.bookmarks.create({
 				guid: guid,
 				link: req.body.link,
 				createdAt: createdAt,
@@ -158,14 +158,14 @@ router.post("/", async (req, res) => {
 router.patch("/:guid", async (req, res) =>{
 	try{
 		let updatedAt = new Date();
-		let bookmarks = await models.bookmarks.update(
+		await models.bookmarks.update(
 			{
 				link: req.body.link,
 				description: req.body.description,
 				favorites: req.body.favorites,
 				updatedAt: updatedAt
 			},
-   			{where: {guid: req.params.guid}}
+			{where: {guid: req.params.guid}}
 		);
 		res.status(200).json();
 	}catch(error){
@@ -177,7 +177,7 @@ router.patch("/:guid", async (req, res) =>{
 router.delete("/:guid", async (req, res) => {
 
 	try{
-		let bookmarks = await models.bookmarks.destroy({
+		await models.bookmarks.destroy({
 			where:{guid: req.params.guid}
 		});
 		res.status(200).json();
