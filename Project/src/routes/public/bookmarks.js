@@ -5,7 +5,7 @@ import models from '../../models';
 import uuidv4 from 'uuid/v4'
 
 import validate from 'validate.js';
-import { sortByConstraints, sortDirConstraints, linkConstraints, fieldsConstraints, favoritesConstraints } from '../../validators/bookmarks';
+import { sortByConstraints, sortDirConstraints, linkConstraints, fieldsConstraints } from '../../validators/bookmarks';
 import { limitConstraints, offsetConstraints } from '../../validators/basic';
 
 const router = Router();
@@ -123,12 +123,16 @@ router.post("/", async (req, res) => {
 		const validationResult = validate(req.body, {
 			link: linkConstraints,
 			fields: fieldsConstraints,
-			favorites: favoritesConstraints
 			});
+
+		const favoritesValidation = validate.contains(["false", "true", "0", "1"],req.body.favorites) + validate.isBoolean(req.body.favorites);
 
 		if (validationResult) {
 			res.status(400).json({ errors: validationResult })
 		} 
+		else if(!favoritesValidation){
+			res.status(400).json({ errors: "favorites is not boolean" })
+		}
 		else {
 
 			let createdAt = new Date();

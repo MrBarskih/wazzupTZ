@@ -74,10 +74,14 @@ export const linkConstraints = {
 }
 
 export const favoritesConstraints = {
-  inclusion:{
-    within: {"1": "true", "0": "false","false": "false","true": "true"},//не нашел другого способа проверять на булиан потратил +-5 часов в сумме 
-    message: 'is not boolean'
-  },
-  equality: "true"
+  inclusion:{//не нашел другого способа проверять на булиан с теукщей моделью валидации потратил +-5 часов в сумме 
+      within: {
+        "1": "true", 
+        "0": "false",
+        "false": "false",
+        "true": "true"
+      },
+      message: 'is not boolean'
+  }
 }
 
