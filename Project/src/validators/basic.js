@@ -21,8 +21,9 @@ validate.validators.array = function(value, options) {
     if (!value.every(element => {
       return validate.contains(options.values, element);
     })) {
-      return "is not contains " + options.values;
+      return "does not contain" + options.values;
     }
+    return "ничего не произошло" + options.values;
   }
 };
 

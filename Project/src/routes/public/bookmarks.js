@@ -5,13 +5,15 @@ import models from '../../models';
 import uuidv4 from 'uuid/v4'
 
 import validate from 'validate.js';
-import { sortByConstraints, sortDirConstraints, linkConstraints, fieldsConstraints } from '../../validators/bookmarks';
+import { sortByConstraints, sortDirConstraints, linkConstraints, favoritesConstraints } from '../../validators/bookmarks';
 import { limitConstraints, offsetConstraints } from '../../validators/basic';
 
 const router = Router();
 
  /*@apiParam {Number} offset Смещение начала выборки (с какого по счету, по умолчанию 0)
  * @apiParam {Number} limit Ограничение выборки (как много элементов добавить в выборку, по умолчанию 10)
+ * @apiParam {String} sort_by Имя поля для сортировки, доступные значения: "createdAt", "favorites"
+ * @apiParam {String} Направление сортировки, доступные значения: "asc" / "desc"
  *
  * @apiSuccessExample SUCCESS:
  *   HTTP/1.1 200 OK
@@ -19,17 +21,17 @@ const router = Router();
  *     "data": [
  *       {
  *         	"guid": "a85f0b67-5641-4716-a8a8-bb6740b7eea7",
-            "link": "https://google.drive.com",
-            "createdAt": "2020-02-10T17:33:28.456Z",
-            "description": "Гугл драйв",
-            "favorites": true
+ *          "link": "https://google.drive.com",
+ *          "createdAt": "2020-02-10T17:33:28.456Z",
+ *          "description": "Гугл драйв",
+ *          "favorites": true
  *       }, ...
  *       {
  *         "guid": "5e5d63b3-fca3-4ce7-8338-45d29c185931",
-            "link": "https://google.com",
-            "createdAt": "2020-02-11T18:18:57.520Z",
-            "description": "Гугл",
-            "favorites": true
+ *          "link": "https://google.com",
+ *          "createdAt": "2020-02-11T18:18:57.520Z",
+ *          "description": "Гугл",
+ *          "favorites": true
  *       }
  *     ]
  *   }
@@ -48,9 +50,11 @@ const router = Router();
  *       ],
  *       "sort_by": [
  *         "Sort by is not string"
+ *		   "Sort by is not createdAt,favorites"
  *       ]
  *		 "sort_dir": [
  *         "Sort dir is not string"
+ *		   "Sort dir is not asc,desc"
  *       ]
  *     }
  *   }
@@ -110,10 +114,43 @@ router.get("/", async (req, res) => {
 		}
 	}
 	catch(error){
-		res.status(400).json({errors:{backend:["Error has occured: ", error]}})
+		res.status(400).json({errors:{backend:["An error has occured: ", error]}})
 	}
 });
 
+/* @apiParam {String} link Ссылка на веб-страницу
+ * @apiParam {String} description(не обязательно) Описание ссылки
+ * @apiParam {Boolean} favorites(default: false) Отметить как избранное
+ *
+ * @apiSuccessExample SUCCESS:
+ *   HTTP/1.1 201 Created
+ *   { 
+ *      "data": {
+	 *      "guid": "0fd77e55-0295-462e-a046-ec0baac09a49",
+	 *      "createdAt": "2020-02-18T09:49:34.787Z"
+ * 		}
+ *	 }
+ *
+ * @apiErrorExample ALL EXAMPLES:
+ *   HTTP/1.1 400 Bad Request
+ *   {
+ *     "errors": {
+ *       "favorites": [
+ *          "Favorites is not boolean"
+ *       ],
+ *       "link": [
+ *          {
+ *    			code: 'BOOKMARKS_INVALID_LINK',
+ *    			description: 'Invalid link'
+ *  		},
+ *          {
+ *     			code: 'BOOKMARKS_BLOCKED_DOMAIN',
+ *     			description: '"yahoo.com" banned'
+ *   		}
+ *       ],
+ *     }
+ *   }
+ */
 //добавление в закладок в бд
 router.post("/", async (req, res) => {
 
@@ -121,33 +158,28 @@ router.post("/", async (req, res) => {
 
 		const validationResult = validate(req.body, {
 			link: linkConstraints,
-			fields: fieldsConstraints,
-			});
-
-		const favoritesValidation = validate.contains(["false", "true", "0", "1"],req.body.favorites) + validate.isBoolean(req.body.favorites);
+			favorites: favoritesConstraints
+		});
 
 		if (validationResult) {
 			res.status(400).json({ errors: validationResult })
 		} 
-		else if(!favoritesValidation){
-			res.status(400).json({ errors: "favorites is not boolean" })
-		}
 		else {
 
-			let createdAt = new Date();
-			let guid = uuidv4();
+			const newCreatedAt = new Date();
+			const newGuid = uuidv4();
 			await models.bookmarks.create({
-				guid: guid,
+				guid: newGuid,
 				link: req.body.link,
-				createdAt: createdAt,
+				createdAt: newCreatedAt,
 				description: req.body.description,
 				favorites: req.body.favorites || false
 			});
 
 			res.status(201).json({
 				data: {
-					guid: guid,
-					createdAt: createdAt
+					guid: newGuid,
+					createdAt: newCreatedAt
 				}
 			});
 		}
@@ -157,6 +189,37 @@ router.post("/", async (req, res) => {
 	}
 });
 
+/* @apiParam {String} link Ссылка на веб-страницу
+ * @apiParam {String} description(не обязательно) Описание ссылки
+ * @apiParam {Boolean} favorites(default: false) Отметить как избранное
+ * @apiParam {String} id закладки
+ *
+ * @apiSuccessExample SUCCESS:
+ *   HTTP/1.1 200 OK
+ *   
+ *
+ * @apiErrorExample ALL EXAMPLES:
+ *   HTTP/1.1 404 Not found,
+
+ *   HTTP/1.1 400 Bad Request
+ *   {
+ *     "errors": {
+ *     		"link": [
+ *	            {
+ *	                "code": "BOOKMARKS_INVALID_LINK",
+ *	                "description": "Invalid link"
+ *	            },
+ *	            {
+ *	                "code": "BOOKMARKS_BLOCKED_DOMAIN",
+ *	                "description": "yahoo.com banned"
+ *	            }
+ *	         ],
+ *	         "favorites": [
+ *	            "Favorites is not boolean"
+ *	         ]
+ *      }
+ *    }
+ */
 //изменение закладки
 router.patch("/:guid", async (req, res) =>{
 	try{
@@ -170,17 +233,12 @@ router.patch("/:guid", async (req, res) =>{
 
 				const validationResult = validate(req.body, {
 					link: linkConstraints,
-					fields: fieldsConstraints,
+					favorites: favoritesConstraints
 					});
-
-				const favoritesValidation = validate.contains(["false", "true", "0", "1"],req.body.favorites) + validate.isBoolean(req.body.favorites);
 
 				if (validationResult) {
 					res.status(400).json({ errors: validationResult })
 				} 
-				else if(!favoritesValidation){
-					res.status(400).json({ errors: "favorites is not boolean" })
-				}
 				else {
 					let updatedAt = new Date();
 					await models.bookmarks.update(
@@ -203,6 +261,15 @@ router.patch("/:guid", async (req, res) =>{
 	}
 });
 
+/* @apiParam {String} id закладки
+ *
+ * @apiSuccessExample SUCCESS:
+ *   HTTP/1.1 200 OK
+ *   
+ *
+ * @apiErrorExample ALL EXAMPLES:
+ *   HTTP/1.1 404 Not found,
+ */
 //удаление в закладок в бд
 router.delete("/:guid", async (req, res) => {
 
@@ -228,4 +295,8 @@ router.delete("/:guid", async (req, res) => {
 	}
 });
 
+//дополнительное задание
+router.get("/:guid", async (req, res) => {
+
+});
 export default router;

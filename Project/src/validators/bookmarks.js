@@ -32,17 +32,6 @@ validate.validators.domain = function(value, options) {
   }
 };
 
-export const fieldsConstraints = {
-  array: {
-    type: "string",
-    values: [
-      "link",
-      "description",
-      "favorites",
-    ]
-  }
-}
-
 export const sortByConstraints = {
   singleValue: {  
     type : "string",
@@ -54,6 +43,12 @@ export const sortDirConstraints = {
   singleValue: {  
     type : "string",
     only : ["asc", "desc"]
+  }
+}
+
+export const favoritesConstraints = {
+  singleValue: {  
+    type : "boolean"
   }
 }
 
