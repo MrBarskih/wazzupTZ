@@ -309,7 +309,7 @@ router.get("/:guid", async (req, res) => {
 		if(results[0].count){
 			const request = require('request');
 
-			request(`http://htmlweb.ru/analiz/api.php?whois&url=${link}&json`, function (error, response, body) {
+			request(`http://ip-api.com/json/${link}`, function (error, response, body) {
 
 		  		res.status(200).json(body);
 			});
