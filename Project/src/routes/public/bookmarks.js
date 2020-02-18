@@ -304,7 +304,7 @@ router.get("/:guid", async (req, res) => {
 			})
 		]);
 
-		let link = results[0].rows['link'];
+		let link = results[0].rows;
 
 		if(results[0].count){
 			const request = require('request');
