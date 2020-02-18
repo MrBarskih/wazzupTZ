@@ -23,37 +23,37 @@ validate.validators.domain = function(value, options) {
   if (options.bannedDomains){
     if (validate.contains(options.bannedDomains, urlDomain)){
     let result = {
-      code: 'BOOKMARKS_BLOCKED_DOMAIN',
-      description: `${urlDomain} banned'`
+      code: "BOOKMARKS_BLOCKED_DOMAIN",
+      description: `${urlDomain} banned`
     };
 
     return result
     }
   }
-}
+};
 
 export const fieldsConstraints = {
   array: {
-    type: 'string',
+    type: "string",
     values: [
-      'link',
-      'description',
-      'favorites',
+      "link",
+      "description",
+      "favorites",
     ]
   }
 }
 
 export const sortByConstraints = {
-  format: {
-    pattern: "[a-zA-Z]+",
-    message: "is not string"
+  singleValue: {  
+    type : "string",
+    only : ["createdAt", "favorites"]
   }
 }
 
 export const sortDirConstraints = {
-  format: {
-    pattern: "[a-zA-Z]+",
-    message: "is not string"
+  singleValue: {  
+    type : "string",
+    only : ["asc", "desc"]
   }
 }
 
@@ -61,27 +61,11 @@ export const linkConstraints = {
   url:{
     schemes: ["http", "https"],
     message: {
-      code: 'BOOKMARKS_INVALID_LINK',
-      description: 'Invalid link'
+      code: "BOOKMARKS_INVALID_LINK",
+      description: "Invalid link"
     }
   },
   domain:{
-    bannedDomains:[
-      'yahoo.com',
-      'socket.io'
-    ]
+    bannedDomains: ["yahoo.com", "socket.io"]
   }
 }
-
-export const favoritesConstraints = {
-  inclusion:{//не нашел другого способа проверять на булиан с теукщей моделью валидации потратил +-5 часов в сумме 
-      within: {
-        "1": "true", 
-        "0": "false",
-        "false": "false",
-        "true": "true"
-      },
-      message: 'is not boolean'
-  }
-}
-

@@ -88,7 +88,7 @@ router.get("/", async (req, res) => {
 					})
 				]);
 
-			let fields = req.body.fields || [
+			let fields = [
 				'guid',
 				'link',
 				'createdAt',
@@ -103,7 +103,6 @@ router.get("/", async (req, res) => {
 						if (bookmarks[current] !== null) {
 							object[current] = bookmarks[current];
 						}
-
 						return object;
 					}, {});
 				})

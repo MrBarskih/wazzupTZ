@@ -26,6 +26,26 @@ validate.validators.array = function(value, options) {
   }
 };
 
+validate.validators.singleValue = function(value, options) {
+
+  if (!value) {
+    return;
+  }
+
+  if (options.type) {
+    if ((typeof value) !== options.type) {
+      return "is not " + options.type;
+    }
+  }
+
+  if (options.only){
+    if (!validate.contains(options.only, value)){
+      return "is not " + options.only;
+    }
+  }
+
+};
+
 export const offsetConstraints = {
   numericality: {
     onlyInteger: true,
