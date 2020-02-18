@@ -297,6 +297,28 @@ router.delete("/:guid", async (req, res) => {
 
 //дополнительное задание
 router.get("/:guid", async (req, res) => {
+	try{
+		let results = await Promise.all([
+			await models.bookmarks.findAndCountAll({
+				where: {guid: req.params.guid}
+			})
+		]);
 
+		let link = results[0].rows['link'];
+
+		if(results[0].count){
+			const request = require('request');
+
+			request(`http://htmlweb.ru/analiz/api.php?whois&url=${link}&json`, function (error, response, body) {
+
+		  		res.status(200).json(body);
+			});
+		}else{
+			res.status(404).json();
+		}
+	}
+	catch (error) {
+		res.status(400).json({ errors: { backend: ["Error has occured: ", error] } })
+	}
 });
 export default router;
