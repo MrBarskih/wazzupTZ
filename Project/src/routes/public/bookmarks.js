@@ -10,6 +10,22 @@ import { limitConstraints, offsetConstraints } from '../../validators/basic';
 
 const router = Router();
 
+//Данная функция выбирает домен из всей линки 
+//http://www.blog.classroom.me.uk/index.php - на входе
+//www.blog.classroom.me.uk - на выходе
+function getDomain(link) {
+	//find & remove protocol (http, ftp, etc.) and get hostname
+	if (link.indexOf("//") > -1) {
+        link = link.split('/')[2];
+    }
+    else {
+        link = link.split('/')[0];
+    }
+    link = link.split(':')[0];//find & remove port number
+    link = link.split('?')[0];//find & remove "?"
+    return link;
+}
+
  /*@apiParam {Number} offset Смещение начала выборки (с какого по счету, по умолчанию 0)
  * @apiParam {Number} limit Ограничение выборки (как много элементов добавить в выборку, по умолчанию 10)
  * @apiParam {String} sort_by Имя поля для сортировки, доступные значения: "createdAt", "favorites"
@@ -73,17 +89,18 @@ router.get("/", async (req, res) => {
 		} 
 		else {
 
-			let offset 		= req.query.offset || 0;
-			let limit 		= req.query.limit || 50;
-			/*let filter 		= req.query.filter;
-			let filterValue = req.query.filter_value;
-			let filterFrom 	= req.query.filter_from;
-			let filterTo 	= req.query.filter_to;*/
-			let sortBy 		= req.query.sort_by || "createdAt";
-			let sortDir 	= req.query.sort_dir || "asc";
+			const offset 		= req.query.offset || 0;
+			const limit 		= req.query.limit || 50;
+			const filter 		= req.query.filter;
+			const filterValue 	= req.query.filter_value || 1;
+			const filterFrom 	= req.query.filter_from;
+			const filterTo 		= req.query.filter_to;
+			const sortBy 		= req.query.sort_by || "createdAt";
+			const sortDir 		= req.query.sort_dir || "asc";
 
 			let results = await Promise.all([
 					await models.bookmarks.findAndCountAll({
+						where: filter ? sequelize.where(sequelize.fn('char_length', sequelize.col('favorites')), false) : null,
 						offset,
 						limit,
 						order :[
@@ -92,7 +109,7 @@ router.get("/", async (req, res) => {
 					})
 				]);
 
-			let fields = [
+			const fields = [
 				'guid',
 				'link',
 				'createdAt',
@@ -114,7 +131,7 @@ router.get("/", async (req, res) => {
 		}
 	}
 	catch(error){
-		res.status(400).json({errors:{backend:["An error has occured: ", error]}})
+		res.status(400).json({errors:{backend:["An error has occured: ", req.query.filter_value, req.query.filter]}})
 	}
 });
 
@@ -296,23 +313,28 @@ router.delete("/:guid", async (req, res) => {
 });
 
 //дополнительное задание
+//выбор этого api из-за безлимитных запросов.
+//изначально делалось через api htmlweb.ru из задания, но там ограниченные запросы (3-5шт. в день) 
 router.get("/:guid", async (req, res) => {
 	try{
-		let results = await Promise.all([
+		const results = await Promise.all([
 			await models.bookmarks.findAndCountAll({
 				where: {guid: req.params.guid}
 			})
 		]);
-
-		let link = results[0].rows[0].dataValues.link;
-
+		
 		if(results[0].count){
 			const request = require('request');
-
-			request(`http://ip-api.com/json/${link}`, function (error, response, body) {
-
-		  		res.status(200).json(body);
+			const domain = getDomain(results[0].rows[0].dataValues.link);//достается из линки домен
+			
+			request(`http://ip-api.com/json/${domain}`, function (error, response, body) {
+				if (error){
+					res.status(400).json(JSON.parse(error));
+				}else{
+					res.status(200).json(JSON.parse(body));
+				}
 			});
+
 		}else{
 			res.status(404).json();
 		}
