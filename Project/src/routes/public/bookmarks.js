@@ -2,10 +2,11 @@
 import { Router } from 'express';
 
 import models from '../../models';
-import uuidv4 from 'uuid/v4'
+import uuidv4 from 'uuid/v4';
+import sequelize from 'sequelize';
 
 import validate from 'validate.js';
-import { sortByConstraints, sortDirConstraints, linkConstraints, favoritesConstraints } from '../../validators/bookmarks';
+import { sortByConstraints, sortDirConstraints, linkConstraints, favoritesConstraints, filterConstraints } from '../../validators/bookmarks';
 import { limitConstraints, offsetConstraints } from '../../validators/basic';
 
 const router = Router();
@@ -72,6 +73,10 @@ function getDomain(link) {
  *         "Sort dir is not string"
  *		   "Sort dir is not asc,desc"
  *       ]
+ *		 "filter": [
+ *         "Sort by is not string"
+ *		   "Sort by is not createdAt,favorites"
+ *       ]
  *     }
  *   }
  */
@@ -81,7 +86,8 @@ router.get("/", async (req, res) => {
 			limit: limitConstraints,
 			offset: offsetConstraints,
 			sort_by: sortByConstraints,
-			sort_dir: sortDirConstraints
+			sort_dir: sortDirConstraints,
+			filter: filterConstraints,
 		});
 
 		if (validationResult) {
@@ -92,7 +98,7 @@ router.get("/", async (req, res) => {
 			const offset 		= req.query.offset || 0;
 			const limit 		= req.query.limit || 50;
 			const filter 		= req.query.filter;
-			const filterValue 	= req.query.filter_value || 1;
+			const filterValue 	= req.query.filter_value;
 			const filterFrom 	= req.query.filter_from;
 			const filterTo 		= req.query.filter_to;
 			const sortBy 		= req.query.sort_by || "createdAt";
@@ -100,7 +106,7 @@ router.get("/", async (req, res) => {
 
 			let results = await Promise.all([
 					await models.bookmarks.findAndCountAll({
-						where: filter ? sequelize.where(sequelize.fn('char_length', sequelize.col('favorites')), false) : null,
+						where: filter ? sequelize.where(sequelize.fn("",sequelize.col(`${filter}`)), filterValue) : null,
 						offset,
 						limit,
 						order :[
@@ -131,8 +137,8 @@ router.get("/", async (req, res) => {
 		}
 	}
 	catch(error){
-		res.status(400).json({errors:{backend:["An error has occured: ", req.query.filter_value, req.query.filter]}})
 	}
+		res.status(400).json({errors:{backend:["An error has occured: ", error]}})
 });
 
 /* @apiParam {String} link Ссылка на веб-страницу

@@ -64,3 +64,10 @@ export const linkConstraints = {
     bannedDomains: ["yahoo.com", "socket.io"]
   }
 }
+
+export const filterConstraints = {
+   singleValue: {  
+    type : "string",
+    only : ["createdAt", "favorites"]
+  }
+}
