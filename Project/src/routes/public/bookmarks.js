@@ -137,8 +137,8 @@ router.get("/", async (req, res) => {
 		}
 	}
 	catch(error){
-	}
 		res.status(400).json({errors:{backend:["An error has occured: ", error]}})
+	}
 });
 
 /* @apiParam {String} link Ссылка на веб-страницу
