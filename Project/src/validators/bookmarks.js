@@ -71,3 +71,4 @@ export const filterConstraints = {
     only : ["createdAt", "favorites"]
   }
 }
+

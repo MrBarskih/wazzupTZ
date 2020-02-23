@@ -6,7 +6,7 @@ import uuidv4 from 'uuid/v4';
 import sequelize from 'sequelize';
 
 import validate from 'validate.js';
-import { sortByConstraints, sortDirConstraints, linkConstraints, favoritesConstraints, filterConstraints } from '../../validators/bookmarks';
+import { sortByConstraints, sortDirConstraints, linkConstraints, favoritesConstraints, filterConstraints, filterToConstraints, filterFromConstraints } from '../../validators/bookmarks';
 import { limitConstraints, offsetConstraints } from '../../validators/basic';
 
 const router = Router();
@@ -25,6 +25,23 @@ function getDomain(link) {
     link = link.split(':')[0];//find & remove port number
     link = link.split('?')[0];//find & remove "?"
     return link;
+}
+
+//Функция для формирования условной части WHERE sql запроса для функций sequelize.FindAndCountAll, sequelize.FindAll
+function getWhereCondition(filter, value, from, to){
+	let result;
+	if(value){
+		result = sequelize.where(sequelize.fn("",sequelize.col(`${filter}`)), value);
+	}
+	else if(from && to){
+		result = sequelize.where(sequelize.fn("",sequelize.col(`${filter}`)), `BETWEEN ${from} AND ` , to);
+	}
+	else{
+		from ? 	result = sequelize.where(sequelize.fn("",sequelize.col(`${filter}`)), '>=' , from) :
+				result = sequelize.where(sequelize.fn("",sequelize.col(`${filter}`)), '<=' , to);
+	}
+
+	return result;
 }
 
  /*@apiParam {Number} offset Смещение начала выборки (с какого по счету, по умолчанию 0)
@@ -105,15 +122,15 @@ router.get("/", async (req, res) => {
 			const sortDir 		= req.query.sort_dir || "asc";
 
 			let results = await Promise.all([
-					await models.bookmarks.findAndCountAll({
-						where: filter ? sequelize.where(sequelize.fn("",sequelize.col(`${filter}`)), filterValue) : null,
-						offset,
-						limit,
-						order :[
-							[`${sortBy}`, `${sortDir}`]
-						]
-					})
-				]);
+				await models.bookmarks.findAndCountAll({
+					where: filter ? getWhereCondition(filter, filterValue, filterFrom, filterTo) : null,
+					offset,
+					limit,
+					order :[
+						[`${sortBy}`, `${sortDir}`]
+					]
+				})
+			]);
 
 			const fields = [
 				'guid',
@@ -331,7 +348,8 @@ router.get("/:guid", async (req, res) => {
 		
 		if(results[0].count){
 			const request = require('request');
-			const domain = getDomain(results[0].rows[0].dataValues.link);//достается из линки домен
+			const bookmarkUrl = results[0].rows[0].dataValues.link;
+			const domain = getDomain(bookmarkUrl);//достается из линки домен
 			
 			request(`http://ip-api.com/json/${domain}`, function (error, response, body) {
 				if (error){
