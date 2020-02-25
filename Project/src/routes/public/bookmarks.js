@@ -353,13 +353,15 @@ router.get("/:guid", async (req, res) => {
 
 			let result;
 			
-			request(`http://ip-api.com/json/${domain}`, function (error, response, body) {
+			result = request(`http://ip-api.com/json/${domain}`, function (error, response, body) {
 				if (error){
 					res.status(400).json(JSON.parse(error));
 				}else{
-					res.status(200).json(JSON.parse(body));
+					return JSON.parse(body);
 				}
 			});
+
+			res.status(200).json(result);
 
 		}else{
 			res.status(404).json();
