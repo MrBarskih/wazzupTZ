@@ -4,6 +4,7 @@ import { Router } from 'express';
 import models from '../../models';
 import uuidv4 from 'uuid/v4';
 import sequelize from 'sequelize';
+import request from 'request';
 
 import validate from 'validate.js';
 import { sortByConstraints, sortDirConstraints, linkConstraints, favoritesConstraints, filterConstraints, filterToConstraints, filterFromConstraints } from '../../validators/bookmarks';
@@ -347,9 +348,10 @@ router.get("/:guid", async (req, res) => {
 		]);
 		
 		if(results[0].count){
-			const request = require('request');
 			const bookmarkUrl = results[0].rows[0].dataValues.link;
 			const domain = getDomain(bookmarkUrl);//достается из линки домен
+
+			let result;
 			
 			request(`http://ip-api.com/json/${domain}`, function (error, response, body) {
 				if (error){
