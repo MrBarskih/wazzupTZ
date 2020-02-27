@@ -5,6 +5,7 @@ import models from '../../models';
 import uuidv4 from 'uuid/v4';
 import sequelize from 'sequelize';
 import request from 'request';
+import { parse } from 'node-html-parser';
 
 import validate from 'validate.js';
 import { sortByConstraints, sortDirConstraints, linkConstraints, favoritesConstraints, filterConstraints, filterToConstraints, filterFromConstraints } from '../../validators/bookmarks';
@@ -365,11 +366,15 @@ router.get("/:guid", async (req, res) => {
 
 			result = await new Promise(function(resolve, refect){
 				request(bookmarkUrl, function (error, response, body) {
-					resolve(body)
+					resolve(body);
 				});
 			});
 
-			res.status(200).json(result);
+			const help = parse(result);
+
+			const help2 = help;
+
+			res.status(200).json(`${help2}`);
 
 		}else{
 			res.status(404).json();
