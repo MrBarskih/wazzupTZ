@@ -37,9 +37,12 @@ function getWhereCondition(filter, value, from, to){
 	else if(from && to){
 		result = sequelize.where(sequelize.fn("",sequelize.col(`${filter}`)), `BETWEEN ${from} AND ` , to);
 	}
-	else{
+	else if(from || to){
 		from ? 	result = sequelize.where(sequelize.fn("",sequelize.col(`${filter}`)), '>=' , from) :
 				result = sequelize.where(sequelize.fn("",sequelize.col(`${filter}`)), '<=' , to);
+	}
+	else{
+		result = null;
 	}
 
 	return result;
