@@ -111,7 +111,7 @@ router.get("/", async (req, res) => {
 			filter: filterConstraints,
 		});
 
-		if (validationResult) {
+		if (validationResult){
 			res.status(400).json({ errors: validationResult })
 		} 
 		else {
