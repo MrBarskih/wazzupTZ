@@ -5,7 +5,6 @@ import models from '../../models';
 import uuidv4 from 'uuid/v4';
 import sequelize from 'sequelize';
 import request from 'request';
-import { parse } from 'node-html-parser';
 
 import validate from 'validate.js';
 import { sortByConstraints, sortDirConstraints, linkConstraints, favoritesConstraints, filterConstraints, filterToConstraints, filterFromConstraints } from '../../validators/bookmarks';
@@ -352,9 +351,12 @@ router.get("/:guid", async (req, res) => {
 			const bookmarkUrl = results[0].rows[0].dataValues.link;
 			const domain = getDomain(bookmarkUrl);//достается из линки домен
 
-			let result;
+			let result = {
+				whoIs: '',
+				openGraph: ''
+			};
 			
-			/*result = await new Promise( function (resolve, refect) {
+			result['whoIs'] = await new Promise( function (resolve, refect) {
 				request(`http://ip-api.com/json/${domain}`, function (error, response, body) {
 					if (error){
 						res.status(400).json(JSON.parse(error));
@@ -362,20 +364,26 @@ router.get("/:guid", async (req, res) => {
 						resolve(JSON.parse(body));
 					}
 				});
-			});*/
-
-			result = await new Promise(function(resolve, refect){
-				request(bookmarkUrl, function (error, response, body) {
-					resolve(body);
-				});
 			});
 
-			const help = parse(result);
+			const urlMetadata = require('url-metadata');
 
-			const help2 = help;
+			result['openGraph'] = await urlMetadata(bookmarkUrl).then(
+			  	function (metadata) { // success handler
+			  		const res = {
+			  			'og:title' : 		metadata['og:title'] ? metadata['og:title'] : 'не найдено',
+			  			'og:image' : 		metadata['og:image'] ? metadata['og:image'] : 'не найдено',
+			  			'og:description': 	metadata['og:description'] ? metadata['og:description'] : 'не найдено'
+			  		};
 
-			res.status(200).json(`${help2}`);
+			    	return res;
+				},
+			  	function (error) { // failure handler
+			    	res.status(400).json(JSON.parse(error));
+				}
+			);
 
+			res.status(200).json(result);
 		}else{
 			res.status(404).json();
 		}
