@@ -7,7 +7,7 @@ import sequelize from 'sequelize';
 import request from 'request';
 
 import validate from 'validate.js';
-import { sortByConstraints, sortDirConstraints, linkConstraints, favoritesConstraints, filterConstraints, filterToConstraints, filterFromConstraints } from '../../validators/bookmarks';
+import { sortByConstraints, sortDirConstraints, linkConstraints, favoritesConstraints, filterConstraints } from '../../validators/bookmarks';
 import { limitConstraints, offsetConstraints } from '../../validators/basic';
 
 const router = Router();
@@ -235,7 +235,7 @@ router.post("/", async (req, res) => {
 					createdAt: newCreatedAt
 				}
 			});
-			
+
 		}
 	}
 	catch (error) {
@@ -246,7 +246,7 @@ router.post("/", async (req, res) => {
 /* @apiParam {String} link Ссылка на веб-страницу
  * @apiParam {String} description(не обязательно) Описание ссылки
  * @apiParam {Boolean} favorites(default: false) Отметить как избранное
- * @apiParam {String} id закладки
+ * @apiParam {String} guid уникальны номер закладки
  *
  * @apiSuccessExample SUCCESS:
  *   HTTP/1.1 200 OK
@@ -294,6 +294,7 @@ router.patch("/:guid", async (req, res) =>{
 					res.status(400).json({ errors: validationResult })
 				} 
 				else {
+
 					let updatedAt = new Date();
 					await models.bookmarks.update(
 						{
@@ -305,17 +306,19 @@ router.patch("/:guid", async (req, res) =>{
 						{where: {guid: req.params.guid}}
 					);
 					res.status(200).json();
+
 				}
 			}else{
 				res.status(404).json();
 			}
-		
-	}catch(error){
+
+	}
+	catch(error){
 		res.status(400).json({ errors: { backend: ["Error has occured: ", error] } })
 	}
 });
 
-/* @apiParam {String} id закладки
+/* @apiParam {String} guid уникальный номер закладки
  *
  * @apiSuccessExample SUCCESS:
  *   HTTP/1.1 200 OK
@@ -347,13 +350,46 @@ router.delete("/:guid", async (req, res) => {
 	catch (error) {
 		res.status(400).json({ errors: { backend: ["Error has occured: ", error] } })
 	}
-});
 
+});
+/* @apiParam {String} guid уникальный номер закладки
+ *
+ * @apiSuccessExample SUCCESS:
+ *   HTTP/1.1 200 OK
+ *    {
+ *	    "url": "https://web-paint.ru/stati-po-risovaniyu/kak-nauchitsya-risovat-poetapnyj-plan.html",
+ *	    "whoIs": {
+ *	        "status": "success",
+ *	        "country": "Russia",
+ *	        "countryCode": "RU",
+ *	        "region": "SPE",
+ *	        "regionName": "St.-Petersburg",
+ *	        "city": "St Petersburg",
+ *	        "zip": "192241",
+ *	        "lat": 59.9394,
+ *	        "lon": 30.2283,
+ *	        "timezone": "Europe/Moscow",
+ *	        "isp": "BEGET.RU",
+ *	        "org": "Beget Ltd",
+ *	        "as": "AS198610 Beget LLC",
+ *	        "query": "87.236.16.142"
+ *	    },
+ *	    "openGraph": {
+ *	        "og:title": "Как научиться рисовать? Подробный план обучения | web-paint.ru",
+ *	        "og:image": "https://web-paint.ru/wp-content/uploads/2018/06/kak.jpg",
+ *	        "og:description": "Надеюсь, что эта статья станет отправной точкой на вашем творческом пути. Вы сможете научиться рисовать, используя последовательный метод «шаг за шагом», который я распишу подробно далее."
+ *	    }
+ *	}
+ *
+ * @apiErrorExample ALL EXAMPLES:
+ *   HTTP/1.1 404 Not found,
+ */
 //дополнительное задание
 //выбор этого api из-за безлимитных запросов.
-//изначально делалось через api htmlweb.ru из задания, но там ограниченные запросы (3-5шт. в день) 
+//изначально делалось через api htmlweb.ru из задания, но там ограниченные запросы (3-5шт. в день)
 router.get("/:guid", async (req, res) => {
 	try{
+
 		const results = await Promise.all([
 			await models.bookmarks.findAndCountAll({
 				where: {guid: req.params.guid}
@@ -364,42 +400,45 @@ router.get("/:guid", async (req, res) => {
 			const bookmarkUrl = results[0].rows[0].dataValues.link;
 			const domain = getDomain(bookmarkUrl);//достается из линки домен
 
-			let result = {
-				whoIs: '',
-				openGraph: ''
-			};
+			let result = {url: bookmarkUrl};
 			
-			result['whoIs'] = await new Promise( function (resolve, refect) {
+			//Функция для получения информации о домене с помощюь стороннего API и как писалось выше использовался не WhoIs
+			//@apiParam {String} domain домен ссылки например: vk.com
+			result['whoIs'] = await new Promise( function (resolve, reject) {
 				request(`http://ip-api.com/json/${domain}`, function (error, response, body) {
 					if (error){
-						res.status(400).json(JSON.parse(error));
+						reject(res.status(400).json({ errors: { backend: ["Error has occured: ", error] } }));
 					}else{
 						resolve(JSON.parse(body));
 					}
 				});
 			});
 
+			//Библиотека url-metadata для получения мета данных
+			//@apiParam {String} link Ссылка на веб-страницу
 			const urlMetadata = require('url-metadata');
 
 			result['openGraph'] = await urlMetadata(bookmarkUrl).then(
-			  	function (metadata) { // success handler
-			  		const res = {
-			  			'og:title' : 		metadata['og:title'] ? metadata['og:title'] : 'не найдено',
-			  			'og:image' : 		metadata['og:image'] ? metadata['og:image'] : 'не найдено',
-			  			'og:description': 	metadata['og:description'] ? metadata['og:description'] : 'не найдено'
-			  		};
+				function (metadata) { // success handler
+					const res = {
+						'og:title' : 		metadata['og:title'] ? metadata['og:title'] : 'не найдено',
+						'og:image' : 		metadata['og:image'] ? metadata['og:image'] : 'не найдено',
+						'og:description': 	metadata['og:description'] ? metadata['og:description'] : 'не найдено'
+					};
 
-			    	return res;
+				return res;
 				},
-			  	function (error) { // failure handler
-			    	res.status(400).json(JSON.parse(error));
+				function (error) { // failure handler
+					res.status(400).json({ errors: { backend: ["Error has occured: ", error] } });
 				}
 			);
 
 			res.status(200).json(result);
+
 		}else{
 			res.status(404).json();
 		}
+
 	}
 	catch (error) {
 		res.status(400).json({ errors: { backend: ["Error has occured: ", error] } })
