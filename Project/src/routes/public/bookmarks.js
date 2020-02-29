@@ -15,6 +15,7 @@ const router = Router();
 //Данная функция выбирает домен из всей линки 
 //http://www.blog.classroom.me.uk/index.php - на входе
 //www.blog.classroom.me.uk - на выходе
+//@apiParam {String} link ссылка для извлечения домена
 function getDomain(link) {
 	//find & remove protocol (http, ftp, etc.) and get hostname
 	if (link.indexOf("//") > -1) {
@@ -163,6 +164,7 @@ router.get("/", async (req, res) => {
 					}, {});
 				})
 			});
+
 		}
 	}
 	catch(error){
@@ -205,7 +207,6 @@ router.get("/", async (req, res) => {
  */
 //добавление в закладок в бд
 router.post("/", async (req, res) => {
-
 	try{
 
 		const validationResult = validate(req.body, {
@@ -234,6 +235,7 @@ router.post("/", async (req, res) => {
 					createdAt: newCreatedAt
 				}
 			});
+			
 		}
 	}
 	catch (error) {
