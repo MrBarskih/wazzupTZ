@@ -29,6 +29,10 @@ function getDomain(link) {
 }
 
 //Функция для формирования условной части WHERE sql запроса для функций sequelize.FindAndCountAll, sequelize.FindAll
+//@apiParam {String} filter Имя поля для фильтрации ("createdAt", "favorites")
+//@apiParam {String} value точное значение фильтрации
+//@apiParam {String} from Использвуется для фильтрации >=
+//@apiParam {String} to Использвуется для фильтрации <=
 function getWhereCondition(filter, value, from, to){
 	let result;
 	if(value){
@@ -51,7 +55,11 @@ function getWhereCondition(filter, value, from, to){
  /*@apiParam {Number} offset Смещение начала выборки (с какого по счету, по умолчанию 0)
  * @apiParam {Number} limit Ограничение выборки (как много элементов добавить в выборку, по умолчанию 10)
  * @apiParam {String} sort_by Имя поля для сортировки, доступные значения: "createdAt", "favorites"
- * @apiParam {String} Направление сортировки, доступные значения: "asc" / "desc"
+ * @apiParam {String} sort_dir Направление сортировки, доступные значения: "asc" / "desc"
+ * @apiParam {String} filter Имя поля для фильтрации ("createdAt", "favorites")
+ * @apiParam {String} filter_value точное значение фильтрации
+ * @apiParam {String} filter_from Использвуется для фильтрации >= 
+ * @apiParam {String} filter_to Использвуется для фильтрации <=
  *
  * @apiSuccessExample SUCCESS:
  *   HTTP/1.1 200 OK
@@ -108,7 +116,7 @@ router.get("/", async (req, res) => {
 			offset: offsetConstraints,
 			sort_by: sortByConstraints,
 			sort_dir: sortDirConstraints,
-			filter: filterConstraints,
+			filter: filterConstraints
 		});
 
 		if (validationResult){
